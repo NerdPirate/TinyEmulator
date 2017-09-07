@@ -100,16 +100,6 @@ bool extract_instruction(inst_t input, internal_inst_t* output) {
     return success;
 }
 
-/*
-typedef struct internal_arith_inst {
-    uint16_t opcode;
-    uint16_t modifier;
-    uint16_t src1;
-    uint16_t src2_immediate;
-    uint16_t src2_register;
-} internal_arith_inst_t;
-*/
-
 bool extract_arith(inst_t input, internal_inst_t* output) {
     opcode_t opcode = extract_opcode(input);
 
@@ -118,26 +108,31 @@ bool extract_arith(inst_t input, internal_inst_t* output) {
         return false;
     }
 
-    output->arith.modifier = input & ARITH_MODIFIER_MASK >> ARITH_MODIFIER_SHIFT;
+    output->arith.modifier = input &
+                             ARITH_MODIFIER_MASK >> 
+                             ARITH_MODIFIER_SHIFT;
 
-    output->arith.src1 = input & ARITH_SRC1_MASK >> ARITH_SRC1_SHIFT;
+    output->arith.src1 = input & 
+                         ARITH_SRC1_MASK >> 
+                         ARITH_SRC1_SHIFT;
     
     if (output->arith.modifier) {
-        output->arith.src2_immediate = input & ARITH_SRC2_IMMEDIATE_MASK >> ARITH_SRC2_IMMEDIATE_SHIFT;
+        output->arith.src2_immediate = input & 
+                                       ARITH_SRC2_IMMEDIATE_MASK >> 
+                                       ARITH_SRC2_IMMEDIATE_SHIFT;
     } else {
-        output->arith.src2_register = input & ARITH_SRC2_REGISTER_MASK >> ARITH_SRC2_REGISTER_SHIFT;
+        output->arith.src2_register = input & 
+                                      ARITH_SRC2_REGISTER_MASK >> 
+                                      ARITH_SRC2_REGISTER_SHIFT;
     }
 
     return output;
 }
-/*#define ARITH_MODIFIER_MASK 0x0800
-#define ARITH_MODIFIER_SHIFT
-#define ARITH_SRC1_MASK 0x0700
-#define ARITH_SRC2_IMMEDIATE_MASK 0x00FF
-#define ARITH_SRC2_REGISTER_MASK 0x0007*/
 
 opcode_t extract_opcode(inst_t input) {
-    uint16_t extract = input & OPCODE_MASK >> OPCODE_SHIFT;
+    uint16_t extract = input & 
+                       OPCODE_MASK >> 
+                       OPCODE_SHIFT;
 
     return (opcode_t)extract;
 }
