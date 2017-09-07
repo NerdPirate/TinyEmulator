@@ -190,15 +190,20 @@ void set_opcode_names();
 /****************************************************************
  * Actual instruction structs
  ****************************************************************/
+#define BYTES_PER_INSTRUCTION (sizeof(inst_t))
+
 typedef uint16_t inst_t;
+
+typedef union inst_mem_u {
+    inst_t inst;
+    mem_value_t mem[BYTES_PER_INSTRUCTION];
+} inst_mem_t;
 
 /****************************************************************
  * Functions to extract instruction information
  ****************************************************************/
-bool extract_instruction(inst_t, internal_inst_t*);
-bool extract_arith(inst_t, internal_inst_t*);
-
 opcode_t extract_opcode(inst_t);
+bool extract_arith(inst_t, internal_inst_t*);
 
 /****************************************************************
  * Functions to execute instruction functionality
@@ -210,8 +215,6 @@ void do_add_imm(internal_inst_t*);
 void do_sub(internal_inst_t*);
 void do_sub_reg(internal_inst_t*);
 void do_sub_imm(internal_inst_t*);
-
-// TODO Add rest of instructions
 
 /****************************************************************
  * Internal emulated machine state
@@ -239,7 +242,9 @@ void write_mem(mem_address_t, mem_value_t);
  * Program operations
  ****************************************************************/
 bool load_program(void*, uint16_t);
-bool run_program(uint16_t);
+bool run_program(uint8_t);
+bool fetch_instruction(inst_t*);
+bool decode_instruction(inst_t, internal_inst_t*);
 bool execute_instruction(inst_t);
 
 #endif

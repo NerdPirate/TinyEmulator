@@ -70,7 +70,7 @@ void set_opcode_names() {
 /****************************************************************
  * Functions to extract instruction information
  ****************************************************************/
-bool extract_instruction(inst_t input, internal_inst_t* output) {
+bool decode_instruction(inst_t input, internal_inst_t* output) {
     opcode_t opcode;
     bool success = false;
 
@@ -170,13 +170,32 @@ void do_add_imm(internal_inst_t* instruction) {
 void do_sub_reg(internal_inst_t* instruction);
 void do_sub_imm(internal_inst_t* instruction);*/
 
+
+
 /****************************************************************
  * Manipulate internal emulated machine state
  ****************************************************************/
-/*reg_value_t increment_pc();
-reg_value_t decrement_pc();
-reg_value_t read_pc();
-void write_pc(reg_value_t);*/
+reg_value_t increment_pc() {
+    reg_value_t current_pc = read_pc();
+    current_pc += BYTES_PER_INSTRUCTION;
+    write_pc(current_pc);
+    return current_pc;
+}
+
+reg_value_t decrement_pc() {
+    reg_value_t current_pc = read_pc();
+    current_pc -= BYTES_PER_INSTRUCTION;
+    write_pc(current_pc);
+    return current_pc;
+}
+
+reg_value_t read_pc() {
+    return state.register_file.pc;
+}
+
+void write_pc(reg_value_t val) {
+    state.register_file.pc = val;
+}
 
 reg_value_t read_reg(reg_name_t reg) {
     if (reg < NUM_REGISTERS) {
@@ -197,10 +216,15 @@ void write_reg(reg_name_t reg, reg_value_t value) {
 }
 
 /*reg_value_t read_onzp();
-void write_onzp(reg_value_t);
+void write_onzp(reg_value_t); */
 
-mem_value_t read_mem(mem_address_t);
-void write_mem(mem_address_t, mem_value_t);*/
+mem_value_t read_mem(mem_address_t addr) {
+    return state.memory.value[addr];
+}
+
+void write_mem(mem_address_t addr, mem_value_t val) {
+    state.memory.value[addr] = val;
+}
 
 
 /****************************************************************
@@ -215,18 +239,70 @@ bool load_program(void* start, uint16_t length) {
     return true;
 }
 
-bool run_program(uint16_t start) {
+bool run_program(uint8_t start_addr) {
+    write_pc(start_addr);
+    inst_t current;
+    bool done = false;
+    bool error = false;
+
+    while(!done && !error) {
+        error |= fetch_instruction(&current);
+        //error |= decode
+        error |= execute_instruction(current);
+        done = true; // TODO just get to compile
+    }
+
+
+
+    // TODO More
     return true;
+
 }
 
 bool execute_instruction(inst_t input) {
     internal_inst_t instruction;
-    if (!extract_instruction(input, &instruction)) {
+
+    // Decode instruction and convert to internal representation
+    if (!decode_instruction(input, &instruction)) {
         printf("Error extracting instruction 0x%x\n", input);
         return false;
     }
 
-    //TODO More
+    // Executing instruction will advance the PC to the next instruction
+    /*if (!execute_instruction(&instruction)) {
+        printf("Error executing instrution 0x%x\n", input);
+        return false;
+    }*/
+
+    /* big switch statement 
+    if HALT return false
+    */
+
+
+
+    return true;
+}
+
+
+// TODO Need to think harder about endian-ness!
+// Increments PC after fetching
+bool fetch_instruction(inst_t* current) {
+    reg_value_t i = 0;
+    inst_mem_t inst_memory;
+    reg_value_t pc_value = read_pc();
+
+    for(; i < BYTES_PER_INSTRUCTION; i++) {
+        inst_memory.mem[i] = read_mem(pc_value + i);
+
+        // Memory range rollover!
+        if (i + pc_value < pc_value) {
+            printf("Instruction fetch rolled over past end of memory range!\n");
+            return false;
+        }
+    }
+
+    *current = inst_memory.inst;
+    increment_pc();
     return true;
 }
 
