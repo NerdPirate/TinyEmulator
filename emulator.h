@@ -181,6 +181,31 @@ typedef union internal_inst {
 } internal_inst_t;
 
 /****************************************************************
+ * Instruction execution functions and opcode mappings
+ ****************************************************************/
+typedef bool (*INST_EXECUTE)(internal_inst_t*);
+
+//extern INST_EXECUTE arith_execute;
+bool arith_execute(internal_inst_t*);
+
+//extern INST_EXECUTE ldstr_execute;
+bool ldstr_execute(internal_inst_t*);
+
+//extern INST_EXECUTE mov_execute;
+bool mov_execute(internal_inst_t*);
+
+//extern INST_EXECUTE test_execute;
+bool test_execute(internal_inst_t*);
+
+//extern INST_EXECUTE jump_execute;
+bool jump_execute(internal_inst_t*);
+
+//extern INST_EXECUTE halt_execute;
+bool halt_execute(internal_inst_t*);
+
+extern INST_EXECUTE execution_functions[NUM_OPCODES];
+
+/****************************************************************
  * Opcode string name mapping
  ****************************************************************/
 extern opcode_map_t opcode_mapping[NUM_OPCODES];

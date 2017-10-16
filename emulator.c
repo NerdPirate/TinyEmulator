@@ -12,7 +12,12 @@
 #include "emulator.h"
 
 /****************************************************************
- * IOpcade to string name mapping
+ * Instruction execution functions and opcode mappings
+ ****************************************************************/
+INST_EXECUTE execution_functions[NUM_OPCODES];
+
+/****************************************************************
+ * Opcode to string name mapping
  ****************************************************************/
 opcode_map_t opcode_mapping[NUM_OPCODES];
 
@@ -20,6 +25,38 @@ opcode_map_t opcode_mapping[NUM_OPCODES];
  * Internal emulated machine state
  ****************************************************************/
 machine_state_t state;
+
+/****************************************************************
+ * Sets up the execution function mapping
+ ****************************************************************/
+void set_execution_functions() {
+    opcode_t opcode;
+    INST_EXECUTE ex;
+
+    struct init_execute_functions {
+        opcode_t opcode;
+        INST_EXECUTE execute_function;
+    }  init[] = {
+        {ADD      , &arith_execute },
+        {SUB      , &arith_execute },
+        {INVERT   , &arith_execute },
+        {LD       , &ldstr_execute },
+        {STR      , &ldstr_execute },
+        {MOV      , &mov_execute   },
+        {TEST     , &test_execute  },
+        {JUMP     , &jump_execute  },
+        {HALT     , &halt_execute  }
+    };
+
+#define INIT_SIZE(A) sizeof(A)/sizeof(struct init_execute_functions)
+
+    for (unsigned int index = 0; index < INIT_SIZE(init); index++) {
+        opcode = init[index].opcode;
+        ex = init[index].execute_function;
+        execution_functions[opcode] = ex;
+    }
+#undef INIT_SIZE
+}
 
 /****************************************************************
  * Returns the string version of the given opcode
@@ -54,7 +91,7 @@ void set_opcode_names() {
         {"MOV"      , MOV},
         {"TEST"     , TEST},
         {"JUMP"     , JUMP},
-        {"HALT"     , HALT},
+        {"HALT"     , HALT}
     };
 
 #define INIT_SIZE(A) sizeof(A)/sizeof(struct init_opcode_names)
@@ -226,6 +263,38 @@ void write_mem(mem_address_t addr, mem_value_t val) {
     state.memory.value[addr] = val;
 }
 
+/****************************************************************
+ * Instruction execution functions
+ ****************************************************************/
+bool arith_execute(internal_inst_t* inst) {
+    // TODO more
+    return true;
+}
+
+bool ldstr_execute(internal_inst_t* inst) {
+    // TODO more
+    return true;
+}
+
+bool mov_execute(internal_inst_t* inst) {
+    // TODO more
+    return true;
+}
+
+bool test_execute(internal_inst_t* inst) {
+    // TODO more
+    return true;
+}
+
+bool jump_execute(internal_inst_t* inst) {
+    // TODO more
+    return true;
+}
+
+// Returns false to indicate program should not continue running
+bool halt_execute(internal_inst_t* inst) {
+    return false;
+}
 
 /****************************************************************
  * Program operations
@@ -252,8 +321,6 @@ bool run_program(uint8_t start_addr) {
         done = true; // TODO just get to compile
     }
 
-
-
     // TODO More
     return true;
 
@@ -261,6 +328,7 @@ bool run_program(uint8_t start_addr) {
 
 bool execute_instruction(inst_t input) {
     internal_inst_t instruction;
+    uint16_t opcode;
 
     // Decode instruction and convert to internal representation
     if (!decode_instruction(input, &instruction)) {
@@ -268,17 +336,19 @@ bool execute_instruction(inst_t input) {
         return false;
     }
 
-    // Executing instruction will advance the PC to the next instruction
-    /*if (!execute_instruction(&instruction)) {
-        printf("Error executing instrution 0x%x\n", input);
+    opcode = instruction.arith.opcode;
+
+    if (opcode >= NUM_OPCODES) {
+        printf("Invalid opcode 0x%x\n", opcode);
         return false;
-    }*/
+    }
 
-    /* big switch statement 
-    if HALT return false
-    */
-
-
+    // Call specific execution function for the opcode
+    if (!execution_functions[opcode](&instruction)) {
+        // TODO way to differentiate HALT vs an error in execution
+        printf("Program either halted or experience an error\n");
+        return false;
+    }
 
     return true;
 }
@@ -316,6 +386,9 @@ int main(int argc, char** argv) {
 
     // Initialize opcode name mapping
     set_opcode_names();
+
+    // Initialize execution functions
+    set_execution_functions();
 
     printf("Welcome to the TinyEmulator!\n");
 
